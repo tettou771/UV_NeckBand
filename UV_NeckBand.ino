@@ -11,6 +11,7 @@ uint32_t pastPrint = 0;
 float v1, v2;
 uint32_t past;
 float brightness;
+float phase; // 点滅するとき、0-1 の間でループする
 
 void setup() {
   pinMode(INPUT, vol1pin);
@@ -20,6 +21,7 @@ void setup() {
   v1 = v2 = 0;
   past = millis();
   brightness = 0;
+  phase = 0;
 }
 
 void loop() {
@@ -32,11 +34,13 @@ void loop() {
   bool blinkEnabled = (v2sw == LOW);
 
   if (blinkEnabled) {
-    int32_t blinkFreq = 2. + v2 / 100.; // Hz
     int32_t deltaTime = t - past;
-    int32_t diff = 1. * brightnessMax * deltaTime * blinkFreq / 1000.;
-    brightness -= diff;
-    if (brightness < 0) brightness += brightnessMax;
+    float blinkFreq = 0.5 + v2 / 100.; // Hz
+    float diff = 1. * deltaTime * blinkFreq / 1000.;
+    phase += diff;
+    while (phase > 1.) phase -= 1.;
+
+    brightness = (1. - phase) * (1. - phase) * brightnessMax;
   }
   // not blink
   else {
@@ -57,6 +61,8 @@ void loop() {
       Serial.print(v2);
       Serial.print(" v2sw ");
       Serial.print(v2sw);
+      Serial.print(" phase ");
+      Serial.print(phase);
       Serial.println();
     }
   }
